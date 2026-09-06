@@ -1,0 +1,1 @@
+"""Shared core: configuration, data loading, serialization and metrics."""

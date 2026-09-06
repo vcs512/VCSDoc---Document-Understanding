@@ -1,0 +1,6 @@
+{
+  "detection": {
+    "iou_threshold": 0.5
+  },
+  "ignore_categories": ["menu.etc", "office.dontcare"]
+}

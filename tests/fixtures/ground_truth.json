@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "version": "2.0.0",
+    "split": "train",
+    "image_id": 0,
+    "image_size": {"width": 100, "height": 100}
+  },
+  "valid_line": [
+    {
+      "category": "menu.nm",
+      "group_id": 12,
+      "sub_group_id": 0,
+      "words": [
+        {"quad": {"x1": 10, "y1": 10, "x2": 30, "y2": 10, "x3": 30, "y3": 20, "x4": 10, "y4": 20}, "text": "Nasi", "is_key": 0, "row_id": 1},
+        {"quad": {"x1": 32, "y1": 10, "x2": 52, "y2": 10, "x3": 52, "y3": 20, "x4": 32, "y4": 20}, "text": "Campur", "is_key": 0, "row_id": 2}
+      ]
+    },
+    {
+      "category": "menu.cnt",
+      "group_id": 12,
+      "sub_group_id": 0,
+      "words": [
+        {"quad": {"x1": 10, "y1": 22, "x2": 20, "y2": 22, "x3": 20, "y3": 30, "x4": 10, "y4": 30}, "text": "1", "is_key": 0, "row_id": 3}
+      ]
+    },
+    {
+      "category": "total.total_price",
+      "group_id": 5,
+      "sub_group_id": 0,
+      "words": [
+        {"quad": {"x1": 10, "y1": 40, "x2": 30, "y2": 40, "x3": 30, "y3": 50, "x4": 10, "y4": 50}, "text": "75,000", "is_key": 0, "row_id": 4}
+      ]
+    },
+    {
+      "category": "",
+      "group_id": 99,
+      "sub_group_id": 0,
+      "words": [
+        {"quad": {"x1": 10, "y1": 60, "x2": 40, "y2": 60, "x3": 40, "y3": 70, "x4": 10, "y4": 70}, "text": "MARGIN", "is_key": 0, "row_id": 5}
+      ]
+    }
+  ],
+  "gt_parse": {
+    "menu": [{"nm": "Nasi Campur", "cnt": "1"}],
+    "total": {"total_price": "75,000"}
+  },
+  "dontcare": [],
+  "repeating_symbol": [],
+  "roi": []
+}

@@ -1,0 +1,5 @@
+{
+  "dataset_id": "naver-clova-ix/cord-v2",
+  "cache_dir": "data/cache",
+  "splits": ["train", "validation", "test"]
+}

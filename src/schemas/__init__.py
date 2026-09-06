@@ -1,0 +1,1 @@
+"""Pydantic data transfer objects shared across services."""

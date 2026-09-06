@@ -9,11 +9,43 @@ task.
 
 ## Evaluation Protocol
 
-- KIE models (LayoutLMv3, Moondream) are scored with token-level F1 and semantic
-    entity recognition (SER) on the official CORD split.
-- OCR (PaddleOCR) is scored separately with detection mAP/IOU and recognition
-    CER.
-- All results are recorded per service in the Services section below.
+KIE models are scored on the official CORD split, and OCR is scored separately.
+All results are recorded per service in the Services section below.
+
+### Token-level F1
+
+Spans are matched as normalized `(category, text)` pairs. Categories are
+normalized by stripping BIO/IOB prefixes (`B-`, `I-`, `E-`, `S-`) and text is
+whitespace-collapsed. Matching is multiset-based, so repeated values and
+multi-word values count as many times as they occur. Reports micro-averaged F1
+over all spans, per-category precision/recall/F1, and the macro average across
+categories.
+
+### Semantic entity recognition (SER)
+
+Entity-level F1 comparing gold entities (one per labeled CORD line, grouped by
+group id) against the predicted model entities. Uses the same multiset matching
+as token-level F1 and reports overall, per-category and macro scores.
+Categories listed in `ignore_categories` are excluded from the gold entities.
+
+### OCR detection (mAP / IoU)
+
+Word boxes are matched greedily by detection confidence to gold boxes with IoU
+at least `detection.iou_threshold` (0.5 by default), each gold box matched
+once. Reports average precision (area under the precision-recall curve), mean
+IoU of the matched boxes, and micro precision/recall.
+
+### OCR recognition (CER / WER)
+
+Computed over ground truth and predicted text pairs aligned by the detection
+matching. CER and WER use the Levenshtein edit distance normalized by the
+number of gold characters and words respectively.
+
+### Configuration
+
+`configs/evaluation.json` holds `detection.iou_threshold` and
+`ignore_categories`. Aggregated results are reported as an evaluation report
+with the model and split identifiers.
 
 ## Evaluate PaddleOCR + LayoutLMv3:
 - Inputs: CORD receipt images.
@@ -23,12 +55,12 @@ task.
 ## Evaluate Donut:
 - Inputs: CORD receipt images.
 - Usage: `docker compose run --rm evaluate-donut`
-- Outputs:  dataset metrics.
+- Outputs: dataset metrics.
 
 ## Evaluate Moondream:
 - Inputs: CORD receipt images.
 - Usage: `docker compose run --rm evaluate-moondream`
-- Outputs:  dataset metrics.
+- Outputs: dataset metrics.
 
 ## PEFT in LayoutLMv3:
 - Inputs: LayoutLMv3 checkpoint and CORD train split.
@@ -42,7 +74,7 @@ task.
 
 ## Roadmap
 
-- [ ] Define evaluation protocol
+- [x] Define evaluation protocol
 - [ ] Evaluate PaddleOCR + LayoutLMv3
 - [ ] Evaluate Donut
 - [ ] Evaluate Moondream

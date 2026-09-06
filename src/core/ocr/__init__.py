@@ -1,0 +1,1 @@
+"""Abstract OCR engine interface."""
