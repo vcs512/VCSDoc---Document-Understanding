@@ -6,6 +6,7 @@ ENV PYTHONUNBUFFERED=1 \
     PADDLEOCR_HOME=/root/.paddleocr \
     PYTHONPATH=/app \
     VIRTUAL_ENV=/opt/venv \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
     PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
