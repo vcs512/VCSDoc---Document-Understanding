@@ -1,0 +1,17 @@
+services:
+  evaluate-layoutlmv3:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: vcsdoc-evaluate-layoutlmv3
+    volumes:
+      - ./:/app
+      - ~/.cache/huggingface:/root/.cache/huggingface
+      - ~/.paddleocr:/root/.paddleocr
+    gpus: all
+    command:
+      - python
+      - -m
+      - src.services.evaluate_layoutlmv3
+      - --config
+      - configs/evaluate_layoutlmv3.json

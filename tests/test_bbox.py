@@ -24,6 +24,25 @@ def test_from_quad_computes_min_max() -> None:
     assert bbox.y2 == 40
 
 
+def test_from_quad_clamps_negative_coords() -> None:
+    """Out-of-image quad points should be clamped to the non-negative range."""
+    quad = {
+        "x1": -1,
+        "y1": 538,
+        "x2": 34,
+        "y2": 539,
+        "x3": 34,
+        "y3": 556,
+        "x4": -1,
+        "y4": 555,
+    }
+    bbox = BBox.from_quad(quad)
+    assert bbox.x1 == 0
+    assert bbox.y1 == 538
+    assert bbox.x2 == 34
+    assert bbox.y2 == 556
+
+
 def test_area() -> None:
     """Area should be width times height of the box."""
     bbox = BBox(x1=0, y1=0, x2=10, y2=5)

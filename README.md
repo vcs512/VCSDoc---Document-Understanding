@@ -47,27 +47,64 @@ number of gold characters and words respectively.
 `ignore_categories`. Aggregated results are reported as an evaluation report
 with the model and split identifiers.
 
-## Evaluate PaddleOCR + LayoutLMv3:
-- Inputs: CORD receipt images.
-- Usage: `docker compose run --rm evaluate-layoutlmv3`
-- Outputs: dataset metrics.
+## Evaluate PaddleOCR + LayoutLMv3
 
-## Evaluate Donut:
+- Inputs: CORD receipt images (from `data/`), the fine-tuned LayoutLMv3
+  checkpoint (`checkpoints/layoutlmv3-finetuned-cord`) and the service config
+  (`configs/evaluate_layoutlmv3.json`).
+
+| Key | Description | Value |
+| --- | --- | --- |
+| `split` | CORD split to evaluate | `test` |
+| `output` | Output report path (JSON; CSV written alongside) | `reports/evaluate-layoutlmv3.json` |
+| `ocr.lang` | OCR recognition language | `latin` |
+| `ocr.api` | OCR API family (`classic2`, `paddlex3`, `auto`) | `classic2` |
+| `ocr.det_model_dir` | Explicit detection model directory override | `~/.paddleocr/whl/det/ml/Multilingual_PP-OCRv3_det_infer` |
+| `ocr.return_word_box` | Emit word-level boxes instead of line boxes | `false` |
+| `ocr.use_doc_orientation_classify` | Normalize document orientation before detection | `false` |
+| `ocr.use_doc_unwarping` | Unwarp curled documents before detection | `false` |
+| `ocr.use_textline_orientation` | Correct cropped line orientation | `true` |
+| `ocr.device` | OCR inference device, `cpu` or `gpu` | `cpu` |
+| `kie.model_dir` | Fine-tuned LayoutLMv3 checkpoint | `checkpoints/layoutlmv3-finetuned-cord` |
+| `kie.device` | KIE inference device, `cpu`, `gpu` or `auto` | `auto` |
+| `kie.max_length` | Maximum sequence length | `512` |
+
+- Usage: `docker compose run --rm evaluate-layoutlmv3`. Extra CLI arguments
+  override the compose command, so they must be passed as a full command, e.g.
+  `docker compose run --rm evaluate-layoutlmv3 python -m src.services.evaluate_layoutlmv3 --config configs/evaluate_layoutlmv3.json --limit 10`.
+- Outputs: `reports/evaluate-layoutlmv3.json` and
+  `reports/evaluate-layoutlmv3.csv`.
+
+```bash
+reports/
+├── evaluate-layoutlmv3.json   # detection (mAP/IoU), recognition (CER/WER),
+│                              # token-level F1 and SER metrics
+└── evaluate-layoutlmv3.csv    # flattened spreadsheet view
+```
+
+The report metric values live in the JSON/CSV artifacts; the report is also
+printed to stdout as JSON.
+
+## Evaluate Donut
+
 - Inputs: CORD receipt images.
 - Usage: `docker compose run --rm evaluate-donut`
 - Outputs: dataset metrics.
 
-## Evaluate Moondream:
+## Evaluate Moondream
+
 - Inputs: CORD receipt images.
 - Usage: `docker compose run --rm evaluate-moondream`
 - Outputs: dataset metrics.
 
-## PEFT in LayoutLMv3:
+## PEFT in LayoutLMv3
+
 - Inputs: LayoutLMv3 checkpoint and CORD train split.
 - Usage: `docker compose run --rm train-layoutlmv3`
 - Outputs: LoRA adapter checkpoint and fine-tuned metrics.
 
-## PEFT in Donut:
+## PEFT in Donut
+
 - Inputs: Donut checkpoint and CORD train split.
 - Usage: `docker compose run --rm train-donut`
 - Outputs: LoRA adapter checkpoint and fine-tuned metrics.
@@ -75,7 +112,7 @@ with the model and split identifiers.
 ## Roadmap
 
 - [x] Define evaluation protocol
-- [ ] Evaluate PaddleOCR + LayoutLMv3
+- [x] Evaluate PaddleOCR + LayoutLMv3
 - [ ] Evaluate Donut
 - [ ] Evaluate Moondream
 - [ ] PEFT in LayoutLMv3

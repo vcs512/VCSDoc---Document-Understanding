@@ -132,9 +132,9 @@ class CordReceipt(BaseModel):
     image_size: tuple[int, int]
     lines: list[CordLine]
     gt_parse: dict
-    dontcare: list[int] = Field(default_factory=list)
-    repeating_symbol: list = Field(default_factory=list)
-    roi: list | None = None
+    dontcare: list[list[dict[str, float]]] = Field(default_factory=list)
+    repeating_symbol: list[list[dict[str, object]]] = Field(default_factory=list)
+    roi: dict | None = None
     image: object | None = Field(default=None, exclude=True)
 
     def tokens(

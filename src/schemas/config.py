@@ -39,6 +39,8 @@ class EvaluationConfig(BaseModel):
     Args:
         detection: Detection evaluation settings.
         ignore_categories: Semantic categories excluded from KIE metrics.
+        batch_size: Number of receipts evaluated per processing chunk.
+        ocr_workers: Parallel OCR worker threads, at most the batch size.
 
     Returns:
         A validated evaluation configuration.
@@ -46,3 +48,5 @@ class EvaluationConfig(BaseModel):
 
     detection: DetectionConfig
     ignore_categories: list[str]
+    batch_size: int = 4
+    ocr_workers: int = 4

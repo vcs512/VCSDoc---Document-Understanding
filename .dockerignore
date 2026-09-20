@@ -1,0 +1,11 @@
+.git
+.gitignore
+.venv
+.pytest_cache
+.ruff_cache
+data
+checkpoints
+reports
+tests
+**/__pycache__
+*.pyc

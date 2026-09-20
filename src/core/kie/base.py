@@ -1,6 +1,7 @@
 """Abstract KIE engine interface for evaluation services."""
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable, Sequence
 
 from src.schemas.cord import CordReceipt
 from src.schemas.kie import KiePrediction
@@ -23,3 +24,22 @@ class KieEngine(ABC):
         Returns:
             The structured KIE prediction for the receipt.
         """
+
+    def predict_batch(
+        self,
+        receipts: Sequence[CordReceipt],
+        ocr_results: Iterable[OcrResult],
+    ) -> list[KiePrediction]:
+        """Predict semantic entities for a batch of receipts.
+
+        Args:
+            receipts: Receipts to predict, one prediction per receipt.
+            ocr_results: Per-receipt OCR words in the same order.
+
+        Returns:
+            The KIE predictions in the same order as the input receipts.
+        """
+        return [
+            self.predict(receipt, ocr)
+            for receipt, ocr in zip(receipts, ocr_results)
+        ]

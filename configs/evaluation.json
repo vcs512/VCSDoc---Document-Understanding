@@ -2,5 +2,7 @@
   "detection": {
     "iou_threshold": 0.5
   },
-  "ignore_categories": ["menu.etc", "office.dontcare"]
+  "ignore_categories": ["menu.etc", "office.dontcare"],
+  "batch_size": 4,
+  "ocr_workers": 4
 }

@@ -27,6 +27,10 @@ class BBox(BaseModel):
     def from_quad(cls, quad: dict[str, float]) -> "BBox":
         """Build the minimum enclosing box from a CORD quad point dict.
 
+        Slightly out-of-image quad points are clamped to the non-negative
+        coordinate range, since the CORD annotations contain one-pixel
+        negative values.
+
         Args:
             quad: Mapping with x1, y1, x2, y2, x3, y3, x4, y4 point keys.
 
@@ -35,7 +39,12 @@ class BBox(BaseModel):
         """
         xs = [quad["x1"], quad["x2"], quad["x3"], quad["x4"]]
         ys = [quad["y1"], quad["y2"], quad["y3"], quad["y4"]]
-        return cls(x1=min(xs), y1=min(ys), x2=max(xs), y2=max(ys))
+        return cls(
+            x1=max(0.0, min(xs)),
+            y1=max(0.0, min(ys)),
+            x2=max(0.0, max(xs)),
+            y2=max(0.0, max(ys)),
+        )
 
     @cached_property
     def area(self) -> float:

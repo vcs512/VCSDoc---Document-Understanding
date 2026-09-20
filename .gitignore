@@ -221,4 +221,5 @@ __marimo__/
 data/*
 experiments/*
 results/*
+reports/*
 chekpoints/*

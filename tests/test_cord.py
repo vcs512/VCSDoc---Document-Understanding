@@ -1,7 +1,7 @@
 """Tests for CORD receipt parsing and gold token extraction."""
 
 
-from src.schemas.cord import CordReceipt
+from src.schemas.cord import CordLine, CordReceipt, CordWord
 
 
 def test_entity_count(receipt: CordReceipt) -> None:
@@ -23,6 +23,42 @@ def test_empty_category_excluded_from_entities(receipt: CordReceipt) -> None:
 def test_ocr_words_includes_unlabeled_lines(receipt: CordReceipt) -> None:
     """OCR ground truth words should come from all lines regardless of label."""
     assert len(receipt.ocr_words()) == 5
+
+
+def test_ocr_words_clamps_negative_quads() -> None:
+    """Words with slightly negative quad points should still produce boxes."""
+    receipt = CordReceipt(
+        image_id=34,
+        split="test",
+        image_size=(320, 624),
+        lines=[
+            CordLine(
+                category="etc",
+                group_id=0,
+                words=[
+                    CordWord(
+                        text="Tunai",
+                        quad={
+                            "x1": -1,
+                            "y1": 538,
+                            "x2": 34,
+                            "y2": 539,
+                            "x3": 34,
+                            "y3": 556,
+                            "x4": -1,
+                            "y4": 555,
+                        },
+                    )
+                ],
+            )
+        ],
+        gt_parse={},
+    )
+    words = receipt.ocr_words()
+    assert words[0].bbox.x1 == 0
+    assert words[0].bbox.x2 == 34
+    assert words[0].bbox.y1 == 538
+    assert words[0].bbox.y2 == 556
 
 
 def test_ignore_categories_filters_tokens(receipt: CordReceipt) -> None:

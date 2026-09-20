@@ -5,6 +5,7 @@ from functools import cache
 from pathlib import Path
 
 from src.schemas.config import CordConfig, EvaluationConfig
+from src.schemas.service import LayoutLmv3ServiceConfig
 
 
 @cache
@@ -45,3 +46,15 @@ def load_evaluation_config(path: str | Path) -> EvaluationConfig:
         The validated evaluation configuration.
     """
     return EvaluationConfig.model_validate(load_config(path))
+
+
+def load_layoutlmv3_service_config(path: str | Path) -> LayoutLmv3ServiceConfig:
+    """Load and validate the LayoutLMv3 evaluation service configuration.
+
+    Args:
+        path: Path to the service configuration file.
+
+    Returns:
+        The validated LayoutLMv3 service configuration.
+    """
+    return LayoutLmv3ServiceConfig.model_validate(load_config(path))

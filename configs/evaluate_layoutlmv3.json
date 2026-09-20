@@ -1,0 +1,19 @@
+{
+  "split": "test",
+  "output": "reports/evaluate-layoutlmv3.json",
+  "ocr": {
+    "lang": "latin",
+    "api": "classic2",
+    "det_model_dir": "~/.paddleocr/whl/det/ml/Multilingual_PP-OCRv3_det_infer",
+    "return_word_box": false,
+    "use_doc_orientation_classify": false,
+    "use_doc_unwarping": false,
+    "use_textline_orientation": true,
+    "device": "cpu"
+  },
+  "kie": {
+    "model_dir": "checkpoints/layoutlmv3-finetuned-cord",
+    "device": "auto",
+    "max_length": 512
+  }
+}
