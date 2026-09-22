@@ -1,0 +1,11 @@
+{
+  "split": "test",
+  "output": "reports/evaluate-donut.json",
+  "donut": {
+    "model_dir": "checkpoints/donut-base-finetuned-cord-v2",
+    "device": "auto",
+    "task_prompt": "<s_cord-v2>",
+    "num_beams": 1,
+    "dtype": "float32"
+  }
+}

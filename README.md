@@ -87,9 +87,35 @@ printed to stdout as JSON.
 
 ## Evaluate Donut
 
-- Inputs: CORD receipt images.
-- Usage: `docker compose run --rm evaluate-donut`
-- Outputs: dataset metrics.
+Donut is an OCR-free image-to-text model: it generates the receipt parse tree
+directly from the image, so the report contains only the KIE metrics
+(token-level F1 and SER). Gold for both is derived by flattening the CORD
+`gt_parse` tree, matching Donut's official evaluation protocol.
+
+- Inputs: CORD receipt images (from `data/`) and the Donut checkpoint
+  (`checkpoints/donut-base-finetuned-cord-v2`).
+
+| Key | Description | Value |
+| --- | --- | --- |
+| `split` | CORD split to evaluate | `test` |
+| `output` | Output report path (JSON; CSV written alongside) | `reports/evaluate-donut.json` |
+| `donut.model_dir` | Fine-tuned Donut checkpoint | `checkpoints/donut-base-finetuned-cord-v2` |
+| `donut.device` | Inference device, `cpu`, `gpu` or `auto` | `auto` |
+| `donut.max_length` | Maximum generated sequence length, defaults to the decoder maximum | unset |
+| `donut.task_prompt` | Start token priming the CORD generation | `<s_cord-v2>` |
+| `donut.num_beams` | Beam search width | `1` |
+| `donut.dtype` | Model dtype, `float32` or `float16` | `float32` |
+
+- Usage: `docker compose run --rm evaluate-donut`. Extra CLI arguments
+  override the compose command, so they must be passed as a full command, e.g.
+  `docker compose run --rm evaluate-donut python -m src.services.evaluate_donut --config configs/evaluate_donut.json --limit 10`.
+- Outputs: `reports/evaluate-donut.json` and `reports/evaluate-donut.csv`.
+
+```bash
+reports/
+├── evaluate-donut.json   # token-level F1 and SER metrics
+└── evaluate-donut.csv    # flattened spreadsheet view
+```
 
 ## Evaluate Moondream
 
@@ -113,7 +139,7 @@ printed to stdout as JSON.
 
 - [x] Define evaluation protocol
 - [x] Evaluate PaddleOCR + LayoutLMv3
-- [ ] Evaluate Donut
+- [x] Evaluate Donut
 - [ ] Evaluate Moondream
 - [ ] PEFT in LayoutLMv3
 - [ ] PEFT in Donut

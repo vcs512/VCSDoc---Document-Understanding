@@ -1,22 +1,23 @@
-"""Evaluate the PaddleOCR + LayoutLMv3 pipeline on the CORD dataset."""
+"""Evaluate the Donut image-to-text model on the CORD dataset."""
 
 import argparse
 import json
 
 from src.core.config import (
     load_cord_config,
+    load_donut_service_config,
     load_evaluation_config,
-    load_layoutlmv3_service_config,
 )
 from src.core.data.cord import CordDataset
-from src.core.kie.layoutlmv3 import LayoutLmv3KieEngine
-from src.core.ocr.paddle import PaddleOcrEngine
+from src.core.kie.donut import DonutKieEngine
 from src.core.reporting import (
     flatten_report,
     resolve_output,
     write_csv,
 )
 from src.services.evaluate import Evaluator
+
+_MODEL_ID = "donut"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,11 +27,11 @@ def build_parser() -> argparse.ArgumentParser:
         The configured parser.
     """
     parser = argparse.ArgumentParser(
-        description="Evaluate PaddleOCR + LayoutLMv3 on the CORD dataset."
+        description="Evaluate Donut on the CORD dataset."
     )
     parser.add_argument(
         "--config",
-        default="configs/evaluate_layoutlmv3.json",
+        default="configs/evaluate_donut.json",
         help="Service configuration file.",
     )
     parser.add_argument(
@@ -66,15 +67,21 @@ def run(args: argparse.Namespace) -> dict:
     Returns:
         The serialized evaluation report mapping.
     """
-    service_config = load_layoutlmv3_service_config(args.config)
+    service_config = load_donut_service_config(args.config)
     cord_config = load_cord_config(args.cord_config)
     evaluation_config = load_evaluation_config(args.evaluation_config)
     split = args.split or service_config.split
     dataset = CordDataset(cord_config, split, load_images=True)
-    ocr = PaddleOcrEngine(service_config.ocr)
-    kie = LayoutLmv3KieEngine(service_config.kie)
-    evaluator = Evaluator(ocr, kie, evaluation_config)
-    report = evaluator.evaluate(dataset, split=split, limit=args.limit)
+    kie = DonutKieEngine(service_config.donut)
+    evaluator = Evaluator(None, kie, evaluation_config)
+    report = evaluator.evaluate(
+        dataset,
+        split=split,
+        limit=args.limit,
+        model=_MODEL_ID,
+        include_ocr=False,
+        tree_based=True,
+    )
     return report.model_dump()
 
 
@@ -86,23 +93,12 @@ def main(argv: list[str] | None = None) -> None:
     """
     args = build_parser().parse_args(argv)
     report = run(args)
-    output = resolve_output(service_output(args), args.limit)
+    service_config = load_donut_service_config(args.config)
+    output = resolve_output(service_config.output, args.limit)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     write_csv(output.with_suffix(".csv"), flatten_report(report))
     print(json.dumps(report, indent=2))
-
-
-def service_output(args: argparse.Namespace) -> str:
-    """Resolve the configured report output path from the args.
-
-    Args:
-        args: Parsed command line arguments.
-
-    Returns:
-        The configured output path.
-    """
-    return load_layoutlmv3_service_config(args.config).output
 
 
 if __name__ == "__main__":

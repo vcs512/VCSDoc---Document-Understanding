@@ -3,6 +3,6 @@
     "iou_threshold": 0.5
   },
   "ignore_categories": ["menu.etc", "office.dontcare"],
-  "batch_size": 4,
+  "batch_size": 2,
   "ocr_workers": 4
 }

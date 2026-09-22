@@ -12,6 +12,7 @@ from transformers import (
 
 from src.core.evaluation.common import normalize_category
 from src.core.kie.base import KieEngine
+from src.core.kie.common import resolve_device
 from src.schemas.bbox import BBox
 from src.schemas.cord import CordReceipt
 from src.schemas.kie import KieEntity, KiePrediction, LabeledSpan
@@ -329,24 +330,10 @@ class LayoutLmv3KieEngine(KieEngine):
             self._processor = LayoutLMv3Processor(
                 image_processor=image_processor, tokenizer=tokenizer
             )
-            self._device = _resolve_device(self._config.device)
+            self._device = resolve_device(self._config.device)
             self._model = LayoutLMv3ForTokenClassification.from_pretrained(
                 self._config.model_dir
             )
             self._model.to(self._device)
             self._model.eval()
         return self._processor, self._model, self._device
-
-
-def _resolve_device(requested: str) -> str:
-    """Resolve the requested device to a concrete torch device.
-
-    Args:
-        requested: "auto", "cuda" or "cpu".
-
-    Returns:
-        The concrete device, mapping "auto" to CUDA when available.
-    """
-    if requested == "cuda" or (requested == "auto" and torch.cuda.is_available()):
-        return "cuda"
-    return "cpu"

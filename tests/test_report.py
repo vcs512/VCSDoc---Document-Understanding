@@ -7,16 +7,16 @@ import pytest
 
 from src.core.kie.base import KieEngine
 from src.core.ocr.base import OcrEngine
+from src.core.reporting import (
+    _CSV_FIELDS,
+    flatten_report,
+    write_csv,
+)
 from src.schemas.config import DetectionConfig, EvaluationConfig
 from src.schemas.cord import CordReceipt
 from src.schemas.kie import KieEntity, KiePrediction, LabeledSpan
 from src.schemas.ocr import OcrResult
 from src.services.evaluate import Evaluator
-from src.services.evaluate_layoutlmv3 import (
-    _CSV_FIELDS,
-    flatten_report,
-    write_csv,
-)
 
 
 class PerfectOcrEngine(OcrEngine):
@@ -153,6 +153,23 @@ def test_write_csv_rows(tmp_path) -> None:
     cer = [row for row in reader if row["metric"] == "recognition" and row["category"] == "cer"]
     assert cer[0]["value"] == "0.25"
     assert len(reader) == len(rows)
+
+
+def test_flatten_report_missing_metrics(receipt: CordReceipt) -> None:
+    """Flattened rows should skip metric families absent from the report."""
+    empty = {
+        "overall": {"precision": 0.0, "recall": 0.0, "f1": 0.0},
+        "per_class": {},
+        "macro": None,
+    }
+    report = {
+        "model": "donut",
+        "split": "test",
+        "metrics": {"token_f1": empty, "ser": empty},
+    }
+    rows = flatten_report(report)
+    assert {row["metric"] for row in rows} == {"token_f1", "ser"}
+    assert all(set(row) == set(_CSV_FIELDS) for row in rows)
 
 
 def test_main_writes_json_and_csv(tmp_path, monkeypatch) -> None:

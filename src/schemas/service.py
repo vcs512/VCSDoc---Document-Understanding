@@ -68,3 +68,44 @@ class LayoutLmv3ServiceConfig(BaseModel):
     output: str = "reports/evaluate-layoutlmv3.json"
     ocr: OcrServiceConfig
     kie: KieServiceConfig
+
+
+class DonutEngineConfig(BaseModel):
+    """Configuration for the Donut KIE engine.
+
+    Args:
+        model_dir: Directory holding the fine-tuned image-to-text model.
+        device: Inference device, "auto", "cuda" or "cpu".
+        max_length: Maximum generated sequence length, defaults to the
+            decoder maximum position embeddings when not set.
+        task_prompt: Start token priming the generation for the CORD task.
+        num_beams: Beam search width for the generation.
+        dtype: Model dtype, "float32" or "float16".
+
+    Returns:
+        A validated Donut engine configuration.
+    """
+
+    model_dir: str
+    device: str = "auto"
+    max_length: int | None = None
+    task_prompt: str = "<s_cord-v2>"
+    num_beams: int = 1
+    dtype: Literal["float32", "float16"] = "float32"
+
+
+class DonutServiceConfig(BaseModel):
+    """Configuration of the Donut evaluation service.
+
+    Args:
+        split: Dataset split evaluated by the service.
+        output: Report file written by the service.
+        donut: Donut engine settings.
+
+    Returns:
+        A validated service configuration.
+    """
+
+    split: str = "test"
+    output: str = "reports/evaluate-donut.json"
+    donut: DonutEngineConfig

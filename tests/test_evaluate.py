@@ -3,6 +3,7 @@
 import pytest
 
 from src.core.kie.base import KieEngine
+from src.core.kie.donut import tree_to_prediction
 from src.core.ocr.base import OcrEngine
 from src.schemas.config import DetectionConfig, EvaluationConfig
 from src.schemas.cord import CordReceipt
@@ -177,3 +178,70 @@ def test_evaluator_progress_bar(
     assert bars[1].kwargs["disable"] is False
     assert bars[1].kwargs["total"] == 1
     assert updates == [1, 1]
+
+
+class TreeGoldKieEngine(KieEngine):
+    """KIE engine predicting the exact flattened gt_parse tree."""
+
+    def predict(
+        self, receipt: CordReceipt, ocr: OcrResult | None = None
+    ) -> KiePrediction:
+        """Return the gold tree spans and entities.
+
+        Args:
+            receipt: The receipt under test.
+            ocr: Unused OCR result.
+
+        Returns:
+            Spans and entities matching the flattened gold tree.
+        """
+        return tree_to_prediction(receipt.image_id, receipt.gt_parse)
+
+
+def test_evaluator_tree_based_perfect_scores(
+    receipt: CordReceipt, evaluation_config: EvaluationConfig
+) -> None:
+    """A gold-tree engine should score perfect KIE metrics without OCR."""
+    evaluator = Evaluator(
+        None, TreeGoldKieEngine(), evaluation_config
+    )
+    report = evaluator.evaluate(
+        [receipt],
+        split="test",
+        model="donut",
+        include_ocr=False,
+        tree_based=True,
+    )
+    assert set(report.metrics) == {"token_f1", "ser"}
+    assert report.metrics["token_f1"].overall.f1 == pytest.approx(1.0)
+    assert report.metrics["ser"].overall.f1 == pytest.approx(1.0)
+
+
+def test_evaluator_tree_gold_from_gt_parse(
+    receipt: CordReceipt, evaluation_config: EvaluationConfig
+) -> None:
+    """Tree-based spans should derive from the flattened gt_parse."""
+    evaluator = Evaluator(
+        None, TreeGoldKieEngine(), evaluation_config
+    )
+    report = evaluator.evaluate(
+        [receipt],
+        split="test",
+        model="donut",
+        include_ocr=False,
+        tree_based=True,
+    )
+    f1 = report.metrics["token_f1"]
+    assert "menu.0.nm" in f1.per_class
+    assert f1.per_class["menu.0.nm"].precision == pytest.approx(1.0)
+
+
+def test_evaluator_requires_ocr_when_included(
+    receipt: CordReceipt, evaluation_config: EvaluationConfig
+) -> None:
+    """include_ocr=True should raise when no OCR engine is configured."""
+    evaluator = Evaluator(None, TreeGoldKieEngine(), evaluation_config)
+    with pytest.raises(ValueError):
+        evaluator.evaluate(
+            [receipt], split="test", include_ocr=True, tree_based=True
+        )

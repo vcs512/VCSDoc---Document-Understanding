@@ -5,7 +5,10 @@ from functools import cache
 from pathlib import Path
 
 from src.schemas.config import CordConfig, EvaluationConfig
-from src.schemas.service import LayoutLmv3ServiceConfig
+from src.schemas.service import (
+    DonutServiceConfig,
+    LayoutLmv3ServiceConfig,
+)
 
 
 @cache
@@ -58,3 +61,15 @@ def load_layoutlmv3_service_config(path: str | Path) -> LayoutLmv3ServiceConfig:
         The validated LayoutLMv3 service configuration.
     """
     return LayoutLmv3ServiceConfig.model_validate(load_config(path))
+
+
+def load_donut_service_config(path: str | Path) -> DonutServiceConfig:
+    """Load and validate the Donut evaluation service configuration.
+
+    Args:
+        path: Path to the service configuration file.
+
+    Returns:
+        The validated Donut service configuration.
+    """
+    return DonutServiceConfig.model_validate(load_config(path))

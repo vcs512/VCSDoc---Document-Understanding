@@ -15,3 +15,19 @@ services:
       - src.services.evaluate_layoutlmv3
       - --config
       - configs/evaluate_layoutlmv3.json
+
+  evaluate-donut:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: vcsdoc-evaluate-donut
+    volumes:
+      - ./:/app
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    gpus: all
+    command:
+      - python
+      - -m
+      - src.services.evaluate_donut
+      - --config
+      - configs/evaluate_donut.json

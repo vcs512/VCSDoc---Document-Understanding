@@ -11,6 +11,7 @@ from src.core.evaluation.ser import entity_level_f1
 from src.core.evaluation.token_f1 import token_level_f1
 from src.core.kie.base import KieEngine
 from src.core.ocr.base import OcrEngine
+from src.core.serialization import JsonTreeFlattener
 from src.schemas.config import EvaluationConfig
 from src.schemas.cord import CordEntity, CordReceipt
 from src.schemas.evaluation import EvaluationReport
@@ -33,7 +34,10 @@ class Evaluator:
     """
 
     def __init__(
-        self, ocr: OcrEngine, kie: KieEngine, config: EvaluationConfig
+        self,
+        ocr: OcrEngine | None,
+        kie: KieEngine,
+        config: EvaluationConfig,
     ) -> None:
         self._ocr = ocr
         self._kie = kie
@@ -49,6 +53,8 @@ class Evaluator:
         limit: int | None = None,
         model: str = _MODEL_ID,
         progress: bool = True,
+        include_ocr: bool = True,
+        tree_based: bool = False,
     ) -> EvaluationReport:
         """Score the engines over the receipts and aggregate the metrics.
 
@@ -61,11 +67,17 @@ class Evaluator:
             limit: Optional maximum number of receipts to evaluate.
             model: Model identifier recorded in the report.
             progress: Whether to display the tqdm progress bar.
+            include_ocr: Whether to run the OCR engine and report the detec-
+                tion and recognition metrics.
+            tree_based: Whether the KIE gold derives from the flattened
+                gt_parse tree instead of the CORD line annotations.
 
         Returns:
             The aggregated evaluation report with detection, recognition,
             token-level F1 and SER metrics.
         """
+        if include_ocr and self._ocr is None:
+            raise ValueError("An OCR engine is required when include_ocr is set.")
         tracker = DetectionTracker(self._iou_threshold)
         recognition_pairs: list[tuple[str, str]] = []
         gold_spans: list[LabeledSpan] = []
@@ -80,39 +92,54 @@ class Evaluator:
         )
         try:
             for batch in _batch(islice(receipts, limit), self._batch_size):
-                ocr_results = self._ocr.recognize_batch(
-                    batch, workers=self._ocr_workers
+                ocr_results = (
+                    self._ocr.recognize_batch(batch, workers=self._ocr_workers)
+                    if include_ocr
+                    else [
+                        OcrResult(image_id=receipt.image_id, words=[])
+                        for receipt in batch
+                    ]
                 )
                 predictions = self._kie.predict_batch(batch, ocr_results)
                 for receipt, ocr_result, prediction in zip(
                     batch, ocr_results, predictions
                 ):
-                    self._track_ocr(
-                        tracker, recognition_pairs, receipt, ocr_result
-                    )
-                    gold_spans.extend(
-                        LabeledSpan(category=token.category, text=token.text)
-                        for token in receipt.tokens(self._ignored)
-                    )
+                    if include_ocr:
+                        self._track_ocr(
+                            tracker, recognition_pairs, receipt, ocr_result
+                        )
+                    if tree_based:
+                        tree_spans = JsonTreeFlattener.flatten(receipt.gt_parse)
+                        gold_spans.extend(tree_spans)
+                        gold_entities.extend(
+                            CordEntity(
+                                category=span.category,
+                                group_id=index,
+                                text=span.text,
+                            )
+                            for index, span in enumerate(tree_spans)
+                        )
+                    else:
+                        gold_spans.extend(
+                            LabeledSpan(category=token.category, text=token.text)
+                            for token in receipt.tokens(self._ignored)
+                        )
+                        gold_entities.extend(receipt.entities(self._ignored))
                     predicted_spans.extend(prediction.spans)
-                    gold_entities.extend(receipt.entities(self._ignored))
                     predicted_entities.extend(prediction.entities)
                 bar.update(len(batch))
         finally:
             bar.close()
-        return EvaluationReport(
-            model=model,
-            split=split,
-            metrics={
-                "detection": tracker.metrics(),
-                "recognition": recognition_metrics(
-                    [gold for gold, _pred in recognition_pairs],
-                    [pred for _gold, pred in recognition_pairs],
-                ),
-                "token_f1": token_level_f1(gold_spans, predicted_spans),
-                "ser": entity_level_f1(gold_entities, predicted_entities),
-            },
-        )
+        metrics: dict[str, object] = {}
+        if include_ocr:
+            metrics["detection"] = tracker.metrics()
+            metrics["recognition"] = recognition_metrics(
+                [gold for gold, _pred in recognition_pairs],
+                [pred for _gold, pred in recognition_pairs],
+            )
+        metrics["token_f1"] = token_level_f1(gold_spans, predicted_spans)
+        metrics["ser"] = entity_level_f1(gold_entities, predicted_entities)
+        return EvaluationReport(model=model, split=split, metrics=metrics)
 
     def _track_ocr(
         self,
